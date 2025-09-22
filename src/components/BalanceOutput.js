@@ -77,8 +77,54 @@ BalanceOutput.propTypes = {
 
 export default connect(state => {
   let balance = [];
+  const { journalEntries, accounts, userInput } = state;
 
-  /* YOUR CODE GOES HERE */
+  if (userInput.format) {
+    const periodRange = utils.getMaximumPeriodRange(journalEntries);
+
+    const startPeriod = isNaN(userInput.startPeriod.valueOf())
+      ? periodRange.earliest
+      : userInput.startPeriod;
+
+    const endPeriod = isNaN(userInput.endPeriod.valueOf())
+      ? periodRange.latest
+      : userInput.endPeriod;
+
+    const accountNumbers = accounts.map(a => a.ACCOUNT);
+
+    const startAccount = isNaN(userInput.startAccount)
+      ? Math.min(...accountNumbers)
+      : userInput.startAccount;
+
+    const endAccount = isNaN(userInput.endAccount)
+      ? Math.max(...accountNumbers)
+      : userInput.endAccount;
+
+    const filteredAccounts = accounts.filter(account => {
+      return account.ACCOUNT >= startAccount && account.ACCOUNT <= endAccount;
+    });
+
+    const journalForPeriod = journalEntries.filter(entry => {
+      return entry.PERIOD >= startPeriod && entry.PERIOD <= endPeriod;
+    });
+
+    balance = filteredAccounts.map(account => {
+      const journalForAccount = journalForPeriod.filter(entry => {
+        return entry.ACCOUNT === account.ACCOUNT;
+      });
+
+      const credit = journalForAccount.reduce((acc, entry) => acc + entry.CREDIT, 0);
+      const debit = journalForAccount.reduce((acc, entry) => acc + entry.DEBIT, 0);
+
+      return {
+        ACCOUNT: account.ACCOUNT,
+        DESCRIPTION: account.LABEL,
+        CREDIT: credit,
+        DEBIT: debit,
+        BALANCE: debit - credit
+      };
+    });
+  }
 
   const totalCredit = balance.reduce((acc, entry) => acc + entry.CREDIT, 0);
   const totalDebit = balance.reduce((acc, entry) => acc + entry.DEBIT, 0);

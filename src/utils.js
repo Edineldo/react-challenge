@@ -56,3 +56,18 @@ export const parseUserInput = str => {
     format
   };
 }
+
+export const getMaximumPeriodRange = journal => {
+  const first = journal.reduce((acc, entry) => {
+    return entry.PERIOD < acc ? entry.PERIOD : acc;
+  }, new Date());
+
+  const last = journal.reduce((acc, entry) => {
+    return entry.PERIOD > acc ? entry.PERIOD : acc;
+  }, new Date(0));
+
+  return {
+    earliest: first,
+    latest: last
+  };
+};
